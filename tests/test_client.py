@@ -41,16 +41,24 @@ class TestClient(SimpleTestCase):
                 "Basic %s" % base64.b64encode(b'testsite:supersecretclientsecret').decode('ascii')
             )
             auth_header = request.headers['Authorization']
-            if auth_header == expected_auth_header:
-                return (200, {'Content-Type': 'application/json'}, json.dumps({
-                    'access_token': '5678567856785678',
-                    'expires_in': 3600, 'token_type': 'Bearer', 'scope': 'basic',
-                    'refresh_token': '8765876587658765',
-                }))
-            else:
+            if auth_header != expected_auth_header:
                 raise Exception(
                     "Expected auth header %s, got %s" % (expected_auth_header, auth_header)
                 )
+
+            matcher = responses.urlencoded_params_matcher({
+                'grant_type': 'authorization_code',
+                'code': '4321432143214321',
+                'redirect_uri': 'https://testsite/account/sceneid/login/'
+            })
+            if not matcher(request.body):
+                raise Exception("Incorrect POST body: %r" % request.body)
+
+            return (200, {'Content-Type': 'application/json'}, json.dumps({
+                'access_token': '5678567856785678',
+                'expires_in': 3600, 'token_type': 'Bearer', 'scope': 'basic',
+                'refresh_token': '8765876587658765',
+            }))
 
         responses.add_callback(
             responses.POST,
