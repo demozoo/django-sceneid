@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -48,4 +50,16 @@ def login(request):
     request.session['sceneid_accesstoken'] = access_token
     user_data = client.get_user_data(access_token)
 
-    return HttpResponse(repr(user_data))
+    sceneid = user_data["user"]["id"]
+    # look for an existing user linked to this sceneid
+    User = get_user_model()
+    try:
+        user = User.objects.get(sceneids__sceneid=sceneid)
+    except User.DoesNotExist:
+        user = None
+
+    if user:
+        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        return redirect('/')
+    else:
+        return HttpResponse(repr(user_data))

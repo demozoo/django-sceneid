@@ -12,7 +12,7 @@ To install:
 pip install django-sceneid
 ```
 
-Add `'sceneid'` to your project's `INSTALLED_APPS`.
+Add `'sceneid'` to your project's `INSTALLED_APPS`, then run `./manage.py migrate`.
 
 In your project's top-level URL config, include the URLconf `sceneid.urls`:
 
