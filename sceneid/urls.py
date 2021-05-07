@@ -5,5 +5,6 @@ from sceneid import views
 app_name = 'sceneid'
 
 urlpatterns = [
-    path('auth/', views.auth_redirect, {}, 'auth_redirect'),
+    path('auth/', views.auth_redirect, {}, 'auth'),
+    path('login/', views.login, {}, 'login'),
 ]
