@@ -28,10 +28,12 @@ setup(
     ],
     python_requires=">=3.6",
     install_requires=[
+        'Django>=3.0,<4',
         'requests>=2,<3',
     ],
     extras_require={
         "testing": [
+            'responses>=0.13,<1',
         ]
     },
     license="BSD",
