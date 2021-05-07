@@ -4,18 +4,13 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.test import TestCase
 import responses
 
 
 class TestViews(TestCase):
-    @responses.activate
-    @patch('sceneid.views.get_random_string')
-    def test_log_in_existing_user(self, get_random_string):
-        get_random_string.return_value = '66666666'
-        testuser = User.objects.create_user(username='testuser', password='12345')
-        testuser.sceneids.create(sceneid=1234)
-
+    def set_up_responses(self):
         def token_response(request):
             expected_auth_header = (
                 "Basic %s" % base64.b64encode(b'testsite:supersecretclientsecret').decode('ascii')
@@ -69,6 +64,15 @@ class TestViews(TestCase):
             callback=user_data_response,
         )
 
+    @responses.activate
+    @patch('sceneid.views.get_random_string')
+    def test_log_in_existing_user(self, get_random_string):
+        get_random_string.return_value = '66666666'
+        testuser = User.objects.create_user(username='testuser', password='12345')
+        testuser.sceneids.create(sceneid=1234)
+
+        self.set_up_responses()
+
         response = self.client.get('/account/sceneid/auth/?next=/landing/')
         self.assertEqual(response.status_code, 302)
         self.assertURLEqual(
@@ -88,3 +92,35 @@ class TestViews(TestCase):
         logged_in_user = get_user(self.client)
         self.assertTrue(logged_in_user.is_authenticated)
         self.assertEqual(logged_in_user.username, 'testuser')
+
+    @responses.activate
+    @patch('sceneid.views.get_random_string')
+    def test_log_in_deactivated_user(self, get_random_string):
+        get_random_string.return_value = '66666666'
+        testuser = User.objects.create_user(username='testuser', password='12345')
+        testuser.sceneids.create(sceneid=1234)
+        testuser.is_active = False
+        testuser.save()
+
+        self.set_up_responses()
+
+        response = self.client.get('/account/sceneid/auth/?next=/landing/')
+        self.assertEqual(response.status_code, 302)
+        self.assertURLEqual(
+            response['Location'],
+            'https://id.scene.org/oauth/authorize/?state=66666666&'
+            'redirect_uri=http%3A%2F%2Ftestsite%2Faccount%2Fsceneid%2Flogin%2F&'
+            'response_type=code&client_id=testsite'
+        )
+
+        # attempt to return with mismatched state
+        response = self.client.get('/account/sceneid/login/?state=55555555&code=4321432143214321')
+        self.assertEqual(response.status_code, 400)
+
+        # now with correct state
+        response = self.client.get('/account/sceneid/login/?state=66666666&code=4321432143214321')
+        self.assertRedirects(response, '/landing/')
+        logged_in_user = get_user(self.client)
+        self.assertFalse(logged_in_user.is_authenticated)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]), "This account has been deactivated.")

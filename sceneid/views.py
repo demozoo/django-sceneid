@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
+from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -72,7 +73,11 @@ def login(request):
         user = None
 
     if user:
-        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        if user.is_active:
+            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        else:
+            messages.error(request, "This account has been deactivated.")
+
         return _redirect_back(request)
     else:
         return HttpResponse(repr(user_data))
