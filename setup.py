@@ -28,6 +28,7 @@ setup(
     ],
     python_requires=">=3.6",
     install_requires=[
+        'requests>=2,<3',
     ],
     extras_require={
         "testing": [
