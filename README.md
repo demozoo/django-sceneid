@@ -35,4 +35,6 @@ SCENEID_CLIENT_ID = 'demosite'
 SCENEID_CLIENT_SECRET = 'supersecretclientsecret'
 # The root URL of your website, without a trailing slash
 BASE_URL = 'https://demosite.example.com'
+# Where to redirect to after login (defaults to /accounts/profile/)
+LOGIN_REDIRECT_URL = '/'
 ```

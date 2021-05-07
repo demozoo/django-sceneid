@@ -60,6 +60,6 @@ def login(request):
 
     if user:
         auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect('/')
+        return redirect(settings.LOGIN_REDIRECT_URL)
     else:
         return HttpResponse(repr(user_data))
