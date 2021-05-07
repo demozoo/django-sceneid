@@ -1,18 +1,31 @@
+from urllib.parse import urlencode
 from django import template
 from django.urls import reverse
 
 
 register = template.Library()
 
+def _get_auth_url(request, next_url=None):
+    url = reverse('sceneid:auth')
+
+    if next_url is None and request and request.method == 'GET':
+        next_url = request.path
+
+    if next_url:
+        url += "?" + urlencode({'next': next_url})
+
+    return url
+
+
 @register.inclusion_tag('sceneid/tags/login_button_small.html', takes_context=True)
-def sceneid_login_button_small(context):
+def sceneid_login_button_small(context, next_url=None):
     return {
-        'auth_url': reverse('sceneid:auth'),
+        'auth_url': _get_auth_url(context.get('request'), next_url),
     }
 
 
 @register.inclusion_tag('sceneid/tags/login_button_large.html', takes_context=True)
-def sceneid_login_button_large(context):
+def sceneid_login_button_large(context, next_url=None):
     return {
-        'auth_url': reverse('sceneid:auth'),
+        'auth_url': _get_auth_url(context.get('request'), next_url),
     }

@@ -69,7 +69,7 @@ class TestViews(TestCase):
             callback=user_data_response,
         )
 
-        response = self.client.get('/account/sceneid/auth/?next=/music/')
+        response = self.client.get('/account/sceneid/auth/?next=/landing/')
         self.assertEqual(response.status_code, 302)
         self.assertURLEqual(
             response['Location'],
@@ -84,7 +84,7 @@ class TestViews(TestCase):
 
         # now with correct state
         response = self.client.get('/account/sceneid/login/?state=66666666&code=4321432143214321')
-        self.assertRedirects(response, '/')
+        self.assertRedirects(response, '/landing/')
         logged_in_user = get_user(self.client)
         self.assertTrue(logged_in_user.is_authenticated)
         self.assertEqual(logged_in_user.username, 'testuser')

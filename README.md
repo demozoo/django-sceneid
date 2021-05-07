@@ -51,3 +51,11 @@ The simplest way to add a 'sign in with SceneID' button to your site is to add t
     {% sceneid_login_button_large %}
 {% endif %}
 ```
+
+This will output a button linking to the login view, with a 'next' parameter that will redirect back to the current page after login (unless the current page is a POST request, in which case this will be omitted). To override this, pass a `next_url` parameter to the tag - this can be the desired redirect URL, or False to disable it entirely.
+
+```html+django
+{% sceneid_login_button_large next_url='/some/other/path/' %}
+
+{% sceneid_login_button_large next_url=False %}
+```

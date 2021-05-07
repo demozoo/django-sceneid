@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.crypto import get_random_string
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from sceneid.client import SceneIDClient
 
@@ -22,6 +23,17 @@ def _get_return_uri():
     return settings.BASE_URL + reverse('sceneid:login')
 
 
+def _redirect_back(request):
+    next_url = request.session.get('sceneid_next_url')
+    next_url_is_valid = (
+        next_url
+        and url_has_allowed_host_and_scheme(next_url, request.get_host(), request.is_secure())
+    )
+    if not next_url_is_valid:
+        next_url = settings.LOGIN_REDIRECT_URL
+    return redirect(next_url)
+
+
 def auth_redirect(request):
     """
     Generate the SceneID auth redirect URL and send user there.
@@ -31,6 +43,7 @@ def auth_redirect(request):
 
     redirect_uri = client.get_authorization_uri(state, _get_return_uri())
     request.session['sceneid_state'] = state
+    request.session['sceneid_next_url'] = request.GET.get('next')
     return redirect(redirect_uri)
 
 
@@ -60,6 +73,6 @@ def login(request):
 
     if user:
         auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect(settings.LOGIN_REDIRECT_URL)
+        return _redirect_back(request)
     else:
         return HttpResponse(repr(user_data))
