@@ -38,3 +38,16 @@ BASE_URL = 'https://demosite.example.com'
 # Where to redirect to after login (defaults to /accounts/profile/)
 LOGIN_REDIRECT_URL = '/'
 ```
+
+Integrating into your site
+--------------------------
+
+The simplest way to add a 'sign in with SceneID' button to your site is to add the `sceneid_login_button_small` or `sceneid_login_button_large` template tag in a suitable place on your template:
+
+```html+django
+{% load sceneid_tags %}  {# must be at the top of your template #}
+
+{% if not request.user.is_authenticated %}
+    {% sceneid_login_button_large %}
+{% endif %}
+```
