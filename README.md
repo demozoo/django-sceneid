@@ -59,3 +59,10 @@ This will output a button linking to the login view, with a 'next' parameter tha
 
 {% sceneid_login_button_large next_url=False %}
 ```
+
+If you don't want to use the button images, the `sceneid_auth_url` tag outputs just the URL, to be inserted into a link of your choice. This tag also accepts a `next_url` parameter, as well as supporting the `as var` syntax to write the result to a variable:
+
+```html+django
+{% sceneid_auth_url next_url='/some/other/path/' as auth_url %}
+<a href="{{ auth_url }}">Sign in with SceneID</a>
+```
