@@ -8,25 +8,25 @@
         <p>You successfully logged in with your SceneID as <b>{{ user_data.display_name }}</b>, but it's not connected to an account on this site yet.
         If you already had an account here, you can log in to it and you'll be able to use both login methods from then on.
         If you don't have an account, you can create a new one without having to use a password to log in.</p>
+
+        <form action="{% url 'sceneid:connect_old' %}" method="post">
+            {% csrf_token %}
+            <h2>Log in with your existing account</h2>
+
+            {{ login_form.as_p }}
+
+            <input type="submit" value="Log in" />
+        </form>
+
+        <form action="{% url 'sceneid:connect_new' %}" method="post">
+            {% csrf_token %}
+            <h2>Create a new account</h2>
+
+            {{ register_form.as_p }}
+
+            <div class="field">
+                <input type="submit" value="Register new account"/>
+            </div>
+        </form>
     </body>
 </html>
-
-<form action="{% url 'sceneid:connect_old' %}" method="post">
-    {% csrf_token %}
-    <h3>Log in with your existing account</h3>
-
-    {{ login_form.as_p }}
-
-    <input type="submit" value="Log in" />
-</form>
-
-<form action="{% url 'sceneid:connect_new' %}" method="post">
-    {% csrf_token %}
-    <h3>Create a new account</h3>
-
-    {{ register_form.as_p }}
-
-    <div class="field">
-        <input type="submit" value="Register new account"/>
-    </div>
-</form>
