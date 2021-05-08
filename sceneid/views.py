@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
@@ -8,6 +9,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.module_loading import import_string
 from django.views import View
 from django.views.generic import TemplateView
 from django.views.generic.base import ContextMixin, TemplateResponseMixin
@@ -15,6 +17,9 @@ from django.views.generic.base import ContextMixin, TemplateResponseMixin
 from sceneid.client import SceneIDClient
 from sceneid.forms import UserCreationForm
 from sceneid.models import SceneID
+
+
+app_config = apps.get_app_config('sceneid')
 
 
 def _get_sceneid_client():
@@ -97,9 +102,9 @@ class ConnectView(TemplateView):
     Display the login / registration forms for associating a SceneID we haven't seen before
     with an existing or new account
     """
-    template_name = 'sceneid/connect.html'
-    login_form_class = AuthenticationForm
-    register_form_class = UserCreationForm
+    template_name = app_config.connect_template_name
+    login_form_class = import_string(app_config.connect_login_form_class)
+    register_form_class = import_string(app_config.connect_register_form_class)
 
     def get(self, request, *args, **kwargs):
         try:
@@ -127,9 +132,9 @@ class ConnectOldView(TemplateResponseMixin, ContextMixin, View):
     """
     Handle form submissions of the login form for associating a SceneID with an existing account
     """
-    template_name = 'sceneid/connect.html'
-    login_form_class = AuthenticationForm
-    register_form_class = UserCreationForm
+    template_name = app_config.connect_template_name
+    login_form_class = import_string(app_config.connect_login_form_class)
+    register_form_class = import_string(app_config.connect_register_form_class)
 
     def dispatch(self, request):
         try:
@@ -179,9 +184,9 @@ class ConnectNewView(TemplateResponseMixin, ContextMixin, View):
     """
     Handle form submissions of the registration form for associating a SceneID with a new account
     """
-    template_name = 'sceneid/connect.html'
-    login_form_class = AuthenticationForm
-    register_form_class = UserCreationForm
+    template_name = app_config.connect_template_name
+    login_form_class = import_string(app_config.connect_login_form_class)
+    register_form_class = import_string(app_config.connect_register_form_class)
 
     def dispatch(self, request):
         try:
