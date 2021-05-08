@@ -10,6 +10,7 @@ from django.utils.crypto import get_random_string
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from sceneid.client import SceneIDClient
+from sceneid.forms import UserCreationForm
 from sceneid.models import SceneID
 
 
@@ -91,10 +92,12 @@ def connect(request):
         return _redirect_back(request)
 
     login_form = AuthenticationForm(request)
+    register_form = UserCreationForm()
 
     return render(request, 'sceneid/connect.html', {
         'display_name': request.session['sceneid_login_user_data']['display_name'],
         'login_form': login_form,
+        'register_form': register_form,
     })
 
 
@@ -119,11 +122,38 @@ def connect_old(request):
 
         return _redirect_back(request)
     else:
+        register_form = UserCreationForm()
         return render(request, 'sceneid/connect.html', {
             'display_name': request.session['sceneid_login_user_data']['display_name'],
             'login_form': login_form,
+            'register_form': register_form,
         })
 
 
 def connect_new(request):
-    pass
+    if not request.session.get('sceneid_login_user_data'):
+        return _redirect_back(request)
+
+    if not request.method == 'POST':
+        return redirect('sceneid:connect')
+
+    register_form = UserCreationForm(request.POST)
+    if register_form.is_valid():
+        user = register_form.save()
+        sceneid_num = request.session['sceneid_login_user_data']['id']
+        SceneID.objects.get_or_create(sceneid=sceneid_num, defaults={'user': user})
+        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        try:
+            del request.session['sceneid_login_user_data']
+        except KeyError:
+            # login will overwrite request.session if the old session was authenticated
+            pass
+
+        return _redirect_back(request)
+    else:
+        login_form = AuthenticationForm(request)
+        return render(request, 'sceneid/connect.html', {
+            'display_name': request.session['sceneid_login_user_data']['display_name'],
+            'login_form': login_form,
+            'register_form': register_form,
+        })

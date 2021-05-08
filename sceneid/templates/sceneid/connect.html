@@ -19,3 +19,14 @@
 
     <input type="submit" value="Log in" />
 </form>
+
+<form action="{% url 'sceneid:connect_new' %}" method="post">
+    {% csrf_token %}
+    <h3>Create a new account</h3>
+
+    {{ register_form.as_p }}
+
+    <div class="field">
+        <input type="submit" value="Register new account"/>
+    </div>
+</form>
