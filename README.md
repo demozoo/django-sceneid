@@ -10,6 +10,8 @@ It's assumed that your website has an existing login system, based on [Django's 
 
 The 'Sign in with SceneID' link will authenticate the user against SceneID. If the SceneID account is already associated with a user account on the website (as stored in the database under the sceneid.SceneID model), that user is immediately logged in and your website can refer to `request.user` as normal. Otherwise, the user is redirected to a 'connect' view, prompting them to either log in with an existing username / password, or register a new account (in which case they'll be prompted for a username and other required fields, but not password). In both cases, the resulting user account will be linked to the SceneID account so that they can log in immediately next time.
 
+Demo site (including much of the configuration and customisation described below) - https://github.com/demozoo/django-sceneid-demosite
+
 Installation
 ------------
 
