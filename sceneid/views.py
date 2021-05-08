@@ -1,15 +1,16 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as auth_login
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib import messages
 from django.core.exceptions import SuspiciousOperation
-from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from sceneid.client import SceneIDClient
+from sceneid.models import SceneID
 
 
 def _get_sceneid_client():
@@ -61,7 +62,7 @@ def login(request):
     client = _get_sceneid_client()
     token_data = client.get_access_token(code, _get_return_uri())
     access_token = token_data['access_token']
-    request.session['sceneid_accesstoken'] = access_token
+    request.session['sceneid_access_token'] = access_token
     user_data = client.get_user_data(access_token)
 
     sceneid = user_data["user"]["id"]
@@ -80,4 +81,49 @@ def login(request):
 
         return _redirect_back(request)
     else:
-        return HttpResponse(repr(user_data))
+        # no known user with this sceneid - prompt them to connect to a new or existing account
+        request.session['sceneid_login_user_data'] = user_data["user"]
+        return redirect('sceneid:connect')
+
+
+def connect(request):
+    if not request.session.get('sceneid_login_user_data'):
+        return _redirect_back(request)
+
+    login_form = AuthenticationForm(request)
+
+    return render(request, 'sceneid/connect.html', {
+        'display_name': request.session['sceneid_login_user_data']['display_name'],
+        'login_form': login_form,
+    })
+
+
+def connect_old(request):
+    if not request.session.get('sceneid_login_user_data'):
+        return _redirect_back(request)
+
+    if not request.method == 'POST':
+        return redirect('sceneid:connect')
+
+    login_form = AuthenticationForm(request, request.POST)
+    if login_form.is_valid():
+        user = login_form.get_user()
+        sceneid_num = request.session['sceneid_login_user_data']['id']
+        SceneID.objects.get_or_create(sceneid=sceneid_num, defaults={'user': user})
+        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        try:
+            del request.session['sceneid_login_user_data']
+        except KeyError:
+            # login will overwrite request.session if the old session was authenticated
+            pass
+
+        return _redirect_back(request)
+    else:
+        return render(request, 'sceneid/connect.html', {
+            'display_name': request.session['sceneid_login_user_data']['display_name'],
+            'login_form': login_form,
+        })
+
+
+def connect_new(request):
+    pass
