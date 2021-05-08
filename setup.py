@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="django-sceneid",
     version="0.1",
-    packages=["sceneid"],
+    packages=find_packages(exclude=('tests',)),
     include_package_data=True,
     test_suite="tests",
     url="https://github.com/demozoo/django-sceneid/",
