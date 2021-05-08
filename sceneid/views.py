@@ -103,7 +103,7 @@ class ConnectView(View):
         register_form = UserCreationForm()
 
         return render(request, 'sceneid/connect.html', {
-            'display_name': request.session['sceneid_login_user_data']['display_name'],
+            'user_data': request.session['sceneid_login_user_data'],
             'login_form': login_form,
             'register_form': register_form,
         })
@@ -136,7 +136,7 @@ class ConnectOldView(View):
         else:
             register_form = UserCreationForm()
             return render(request, 'sceneid/connect.html', {
-                'display_name': request.session['sceneid_login_user_data']['display_name'],
+                'user_data': request.session['sceneid_login_user_data'],
                 'login_form': login_form,
                 'register_form': register_form,
             })
@@ -169,7 +169,7 @@ class ConnectNewView(View):
         else:
             login_form = AuthenticationForm(request)
             return render(request, 'sceneid/connect.html', {
-                'display_name': request.session['sceneid_login_user_data']['display_name'],
+                'user_data': request.session['sceneid_login_user_data'],
                 'login_form': login_form,
                 'register_form': register_form,
             })

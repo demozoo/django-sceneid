@@ -1,11 +1,11 @@
 <!doctype html>
 <html>
     <head>
-        <title>SceneID logged in as {{ display_name }}</title>
+        <title>SceneID logged in as {{ user_data.display_name }}</title>
     </head>
     <body>
-        <h1>SceneID logged in as {{ display_name }}</h1>
-        <p>You successfully logged in with your SceneID as <b>{{ display_name }}</b>, but it's not connected to an account on this site yet.
+        <h1>SceneID logged in as {{ user_data.display_name }}</h1>
+        <p>You successfully logged in with your SceneID as <b>{{ user_data.display_name }}</b>, but it's not connected to an account on this site yet.
         If you already had an account here, you can log in to it and you'll be able to use both login methods from then on.
         If you don't have an account, you can create a new one without having to use a password to log in.</p>
     </body>
