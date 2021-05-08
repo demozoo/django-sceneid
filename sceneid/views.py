@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
+from django.views.generic import TemplateView
+from django.views.generic.base import ContextMixin, TemplateResponseMixin
 
 from sceneid.client import SceneIDClient
 from sceneid.forms import UserCreationForm
@@ -90,90 +92,136 @@ class LoginView(View):
             return redirect('sceneid:connect')
 
 
-class ConnectView(View):
+class ConnectView(TemplateView):
     """
     Display the login / registration forms for associating a SceneID we haven't seen before
     with an existing or new account
     """
-    def get(self, request):
+    template_name = 'sceneid/connect.html'
+    login_form_class = AuthenticationForm
+    register_form_class = UserCreationForm
+
+    def get(self, request, *args, **kwargs):
         try:
-            user_data = request.session['sceneid_login_user_data']
+            self.user_data = request.session['sceneid_login_user_data']
         except KeyError:
             return _redirect_back(request)
 
-        login_form = AuthenticationForm(request)
-        register_form = UserCreationForm(user_data)
+        return super().get(request, *args, **kwargs)
 
-        return render(request, 'sceneid/connect.html', {
-            'user_data': user_data,
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        login_form = self.login_form_class(self.request)
+        register_form = self.register_form_class(self.user_data)
+
+        context.update({
+            'user_data': self.user_data,
             'login_form': login_form,
             'register_form': register_form,
         })
+        return context
 
 
-class ConnectOldView(View):
+class ConnectOldView(TemplateResponseMixin, ContextMixin, View):
     """
     Handle form submissions of the login form for associating a SceneID with an existing account
     """
+    template_name = 'sceneid/connect.html'
+    login_form_class = AuthenticationForm
+    register_form_class = UserCreationForm
+
     def dispatch(self, request):
         try:
-            user_data = request.session['sceneid_login_user_data']
+            self.user_data = request.session['sceneid_login_user_data']
         except KeyError:
             return _redirect_back(request)
 
         if not request.method == 'POST':
             return redirect('sceneid:connect')
 
-        login_form = AuthenticationForm(request, request.POST)
-        if login_form.is_valid():
-            user = login_form.get_user()
-            SceneID.objects.get_or_create(sceneid=user_data['id'], defaults={'user': user})
-            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            try:
-                del request.session['sceneid_login_user_data']
-            except KeyError:
-                # login will overwrite request.session if the old session was authenticated
-                pass
-
-            return _redirect_back(request)
+        self.login_form = self.login_form_class(request, request.POST)
+        if self.login_form.is_valid():
+            return self.form_valid(self.login_form)
         else:
-            register_form = UserCreationForm(user_data)
-            return render(request, 'sceneid/connect.html', {
-                'user_data': user_data,
-                'login_form': login_form,
-                'register_form': register_form,
-            })
+            return self.form_invalid(self.login_form)
+
+    def form_valid(self, form):
+        user = form.get_user()
+        SceneID.objects.get_or_create(sceneid=self.user_data['id'], defaults={'user': user})
+        auth_login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        try:
+            del self.request.session['sceneid_login_user_data']
+        except KeyError:
+            # login will overwrite request.session if the old session was authenticated
+            pass
+
+        return _redirect_back(self.request)
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data())
+
+    def get_context_data(self):
+        context = super().get_context_data()
+
+        register_form = self.register_form_class(self.user_data)
+
+        context.update({
+            'user_data': self.user_data,
+            'login_form': self.login_form,
+            'register_form': register_form,
+        })
+
+        return context
 
 
-class ConnectNewView(View):
+class ConnectNewView(TemplateResponseMixin, ContextMixin, View):
     """
     Handle form submissions of the registration form for associating a SceneID with a new account
     """
+    template_name = 'sceneid/connect.html'
+    login_form_class = AuthenticationForm
+    register_form_class = UserCreationForm
+
     def dispatch(self, request):
         try:
-            user_data = request.session['sceneid_login_user_data']
+            self.user_data = request.session['sceneid_login_user_data']
         except KeyError:
             return _redirect_back(request)
 
         if not request.method == 'POST':
             return redirect('sceneid:connect')
 
-        register_form = UserCreationForm(user_data, request.POST)
-        if register_form.is_valid():
-            user = register_form.save()
-            SceneID.objects.get_or_create(sceneid=user_data['id'], defaults={'user': user})
-            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            try:
-                del request.session['sceneid_login_user_data']
-            except KeyError:
-                # login will overwrite request.session if the old session was authenticated
-                pass
-
-            return _redirect_back(request)
+        self.register_form = self.register_form_class(self.user_data, request.POST)
+        if self.register_form.is_valid():
+            return self.form_valid(self.register_form)
         else:
-            login_form = AuthenticationForm(request)
-            return render(request, 'sceneid/connect.html', {
-                'user_data': user_data,
-                'login_form': login_form,
-                'register_form': register_form,
-            })
+            return self.form_invalid(self.register_form)
+
+    def form_valid(self, form):
+        user = form.save()
+        SceneID.objects.get_or_create(sceneid=self.user_data['id'], defaults={'user': user})
+        auth_login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        try:
+            del self.request.session['sceneid_login_user_data']
+        except KeyError:
+            # login will overwrite request.session if the old session was authenticated
+            pass
+
+        return _redirect_back(self.request)
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data())
+
+    def get_context_data(self):
+        context = super().get_context_data()
+
+        login_form = self.login_form_class(self.request)
+
+        context.update({
+            'user_data': self.user_data,
+            'login_form': login_form,
+            'register_form': self.register_form,
+        })
+
+        return context
