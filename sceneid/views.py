@@ -102,7 +102,7 @@ class ConnectView(View):
             return _redirect_back(request)
 
         login_form = AuthenticationForm(request)
-        register_form = UserCreationForm()
+        register_form = UserCreationForm(user_data)
 
         return render(request, 'sceneid/connect.html', {
             'user_data': user_data,
@@ -137,7 +137,7 @@ class ConnectOldView(View):
 
             return _redirect_back(request)
         else:
-            register_form = UserCreationForm()
+            register_form = UserCreationForm(user_data)
             return render(request, 'sceneid/connect.html', {
                 'user_data': user_data,
                 'login_form': login_form,
@@ -158,7 +158,7 @@ class ConnectNewView(View):
         if not request.method == 'POST':
             return redirect('sceneid:connect')
 
-        register_form = UserCreationForm(request.POST)
+        register_form = UserCreationForm(user_data, request.POST)
         if register_form.is_valid():
             user = register_form.save()
             SceneID.objects.get_or_create(sceneid=user_data['id'], defaults={'user': user})

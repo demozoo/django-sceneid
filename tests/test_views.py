@@ -50,7 +50,7 @@ class TestViews(TestCase):
                     'user': {
                         'id': 1234,
                         'first_name': 'Matt', 'last_name': 'Westcott',
-                        'display_name': 'gasman',
+                        'display_name': 'gasman in a trenchcoat',
                     },
                 }))
             else:
@@ -150,9 +150,12 @@ class TestViews(TestCase):
         response = self.client.get('/account/sceneid/connect/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "You successfully logged in with your SceneID as <b>gasman</b>"
+            response,
+            "You successfully logged in with your SceneID as <b>gasman in a trenchcoat</b>"
         )
         self.assertContains(response, 'action="/account/sceneid/connect/old/"')
+        # username in creation form should be pre-populated with cleaned version of display name
+        self.assertContains(response, 'value="gasmaninatrenchcoat"')
 
         # post an incorrect login
         response = self.client.post('/account/sceneid/connect/old/', {
@@ -197,7 +200,8 @@ class TestViews(TestCase):
         response = self.client.get('/account/sceneid/connect/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "You successfully logged in with your SceneID as <b>gasman</b>"
+            response,
+            "You successfully logged in with your SceneID as <b>gasman in a trenchcoat</b>"
         )
         self.assertContains(response, 'action="/account/sceneid/connect/old/"')
 
