@@ -96,14 +96,16 @@ class ConnectView(View):
     with an existing or new account
     """
     def get(self, request):
-        if not request.session.get('sceneid_login_user_data'):
+        try:
+            user_data = request.session['sceneid_login_user_data']
+        except KeyError:
             return _redirect_back(request)
 
         login_form = AuthenticationForm(request)
         register_form = UserCreationForm()
 
         return render(request, 'sceneid/connect.html', {
-            'user_data': request.session['sceneid_login_user_data'],
+            'user_data': user_data,
             'login_form': login_form,
             'register_form': register_form,
         })
@@ -114,7 +116,9 @@ class ConnectOldView(View):
     Handle form submissions of the login form for associating a SceneID with an existing account
     """
     def dispatch(self, request):
-        if not request.session.get('sceneid_login_user_data'):
+        try:
+            user_data = request.session['sceneid_login_user_data']
+        except KeyError:
             return _redirect_back(request)
 
         if not request.method == 'POST':
@@ -123,8 +127,7 @@ class ConnectOldView(View):
         login_form = AuthenticationForm(request, request.POST)
         if login_form.is_valid():
             user = login_form.get_user()
-            sceneid_num = request.session['sceneid_login_user_data']['id']
-            SceneID.objects.get_or_create(sceneid=sceneid_num, defaults={'user': user})
+            SceneID.objects.get_or_create(sceneid=user_data['id'], defaults={'user': user})
             auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             try:
                 del request.session['sceneid_login_user_data']
@@ -136,7 +139,7 @@ class ConnectOldView(View):
         else:
             register_form = UserCreationForm()
             return render(request, 'sceneid/connect.html', {
-                'user_data': request.session['sceneid_login_user_data'],
+                'user_data': user_data,
                 'login_form': login_form,
                 'register_form': register_form,
             })
@@ -147,7 +150,9 @@ class ConnectNewView(View):
     Handle form submissions of the registration form for associating a SceneID with a new account
     """
     def dispatch(self, request):
-        if not request.session.get('sceneid_login_user_data'):
+        try:
+            user_data = request.session['sceneid_login_user_data']
+        except KeyError:
             return _redirect_back(request)
 
         if not request.method == 'POST':
@@ -156,8 +161,7 @@ class ConnectNewView(View):
         register_form = UserCreationForm(request.POST)
         if register_form.is_valid():
             user = register_form.save()
-            sceneid_num = request.session['sceneid_login_user_data']['id']
-            SceneID.objects.get_or_create(sceneid=sceneid_num, defaults={'user': user})
+            SceneID.objects.get_or_create(sceneid=user_data['id'], defaults={'user': user})
             auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             try:
                 del request.session['sceneid_login_user_data']
@@ -169,7 +173,7 @@ class ConnectNewView(View):
         else:
             login_form = AuthenticationForm(request)
             return render(request, 'sceneid/connect.html', {
-                'user_data': request.session['sceneid_login_user_data'],
+                'user_data': user_data,
                 'login_form': login_form,
                 'register_form': register_form,
             })
