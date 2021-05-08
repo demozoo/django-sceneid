@@ -103,3 +103,35 @@ INSTALLED_APPS = [
 ```
 
 The template path specified in `connect_template_name` will then be used for the 'connect' view.
+
+Custom forms
+------------
+
+The form classes used for the login and registration forms are also configurable from the AppConfig class:
+
+* `connect_login_form_class` (default: `'django.contrib.auth.forms.AuthenticationForm'`)
+* `connect_register_form_class` (default: `'sceneid.forms.UserCreationForm'`)
+
+In particular, the provided `UserCreationForm` can be subclassed to add extra fields to the data collected on account creation. For example, to include fields for first name and last name (which will then populate the corresponding fields on the standard Django user model):
+
+```python
+# accounts/forms.py
+from sceneid.forms import UserCreationForm as BaseUserCreationForm
+
+class SceneIDUserCreationForm(BaseUserCreationForm):
+    class Meta(BaseUserCreationForm.Meta):
+        fields = ('username', 'first_name', 'last_name')
+```
+
+```python
+# demosite/apps.py
+from sceneid.apps import SceneIDConfig
+
+class DemositeSceneIDConfig(SceneIDConfig):
+    connect_template_name = 'accounts/connect.html'
+    connect_register_form_class = 'accounts.forms.SceneIDUserCreationForm'
+```
+
+The base `UserCreationForm` class recognises the field names `first_name` and `last_name` where present and pre-populates these from the SceneID data, in addition to pre-populating the `username` field with a cleaned version of the SceneID display name.
+
+Using django-sceneid with [a custom User model](https://docs.djangoproject.com/en/stable/topics/auth/customizing/#substituting-a-custom-user-model) is currently untested. The base `UserCreationForm` assumes the presence of a `'username'` field and will need to be customised accordingly if this is not the case (e.g. if your site uses email as a user's identifier instead), but all other functionality (including the login form) should work unchanged.
