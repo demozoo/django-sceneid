@@ -124,3 +124,51 @@ class TestViews(TestCase):
         self.assertFalse(logged_in_user.is_authenticated)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(str(messages[0]), "This account has been deactivated.")
+
+    @responses.activate
+    @patch('sceneid.views.get_random_string')
+    def test_associate_sceneid_with_existing_user(self, get_random_string):
+        get_random_string.return_value = '66666666'
+        testuser = User.objects.create_user(username='testuser', password='12345')
+
+        self.set_up_responses()
+
+        response = self.client.get('/account/sceneid/auth/?next=/landing/')
+        self.assertEqual(response.status_code, 302)
+        self.assertURLEqual(
+            response['Location'],
+            'https://id.scene.org/oauth/authorize/?state=66666666&'
+            'redirect_uri=http%3A%2F%2Ftestsite%2Faccount%2Fsceneid%2Flogin%2F&'
+            'response_type=code&client_id=testsite'
+        )
+
+        # now with correct state
+        response = self.client.get('/account/sceneid/login/?state=66666666&code=4321432143214321')
+        self.assertRedirects(response, '/account/sceneid/connect/')
+        logged_in_user = get_user(self.client)
+        self.assertFalse(logged_in_user.is_authenticated)
+
+        response = self.client.get('/account/sceneid/connect/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, "You successfully logged in with your SceneID as <b>gasman</b>"
+        )
+        self.assertContains(response, 'action="/account/sceneid/connect/old/"')
+
+        # post an incorrect login
+        response = self.client.post('/account/sceneid/connect/old/', {
+            'username': 'testuser', 'password': '12346'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please enter a correct username and password.")
+        self.assertFalse(logged_in_user.is_authenticated)
+
+        # post a correct login
+        response = self.client.post('/account/sceneid/connect/old/', {
+            'username': 'testuser', 'password': '12345'
+        })
+        self.assertRedirects(response, '/landing/')
+        logged_in_user = get_user(self.client)
+        self.assertTrue(logged_in_user.is_authenticated)
+        self.assertEqual(logged_in_user.username, 'testuser')
+        self.assertTrue(logged_in_user.sceneids.filter(sceneid=1234).exists())
