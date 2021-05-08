@@ -3,6 +3,13 @@ django-sceneid
 
 [SceneID](https://id.scene.org/) authentication for Django
 
+How it works
+------------
+
+It's assumed that your website has an existing login system, based on [Django's authentication framework](https://docs.djangoproject.com/en/stable/topics/auth/). SceneID does not replace it - the ability to log in via SceneID will be offered as an alternative alongside the standard login form. The existing User model will continue to be used, regardless of whether a user logs in through SceneID or a regular username / password.
+
+The 'Sign in with SceneID' link will authenticate the user against SceneID. If the SceneID account is already associated with a user account on the website (as stored in the database under the sceneid.SceneID model), that user is immediately logged in and your website can refer to `request.user` as normal. Otherwise, the user is redirected to a 'connect' view, prompting them to either log in with an existing username / password, or register a new account (in which case they'll be prompted for a username and other required fields, but not password). In both cases, the resulting user account will be linked to the SceneID account so that they can log in immediately next time.
+
 Installation
 ------------
 
@@ -66,3 +73,33 @@ If you don't want to use the button images, the `sceneid_auth_url` tag outputs j
 {% sceneid_auth_url next_url='/some/other/path/' as auth_url %}
 <a href="{{ auth_url }}">Sign in with SceneID</a>
 ```
+
+Customisation
+-------------
+
+At minimum, you'll probably want to customise the template for the 'connect' view to match your site styling. The quick-and-dirty way to do this is to create a template with the path `sceneid/connect.html` within one of your apps, and ensuring that template takes precedence over the default one by placing that app's entry above `'sceneid'`in `INSTALLED_APPS`. This template receives the following context variables:
+
+* `user_data` - the dictionary of user data [returned from SceneID](https://id.scene.org/docs/#cmd-me), consisting of `id`, `first_name`, `last_name` and `display_name`
+* `login_form` - a [Django form object](https://docs.djangoproject.com/en/stable/topics/forms/#the-template) for the login form, to be POSTed to `{% url 'sceneid:connect_old' %}`
+* `register_form` - a [Django form object](https://docs.djangoproject.com/en/stable/topics/forms/#the-template) for the registration form, to be POSTed to `{% url 'sceneid:connect_new' %}`
+
+For more control over customisations, you can [override the AppConfig](https://docs.djangoproject.com/en/stable/ref/applications/#for-application-users) for the `sceneid` app. Within your project-level configuration folder (i.e. the one containing the `settings` and `urls` submodules), add the following to `apps.py`:
+
+```python
+from sceneid.apps import SceneIDConfig
+
+class DemositeSceneIDConfig(SceneIDConfig):
+    connect_template_name = 'accounts/connect.html'
+```
+
+Then replace the `'sceneid'` entry in `INSTALLED_APPS` with the dotted path to the AppConfig class:
+
+```python
+INSTALLED_APPS = [
+    # ...
+    'demosite.apps.DemositeSceneIDConfig',
+    # ...
+]
+```
+
+The template path specified in `connect_template_name` will then be used for the 'connect' view.
