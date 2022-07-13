@@ -15,7 +15,7 @@ Demo site (including much of the configuration and customisation described below
 Installation
 ------------
 
-django-sceneid is compatible with Django 3.x. To install:
+django-sceneid is compatible with Django 3.x and 4.x. To install:
 
 ```shell
 pip install django-sceneid
