@@ -21,12 +21,12 @@ class TestViews(TestCase):
                     "Expected auth header %s, got %s" % (expected_auth_header, auth_header)
                 )
 
-            matcher = responses.urlencoded_params_matcher({
+            matcher = responses.matchers.urlencoded_params_matcher({
                 'grant_type': 'authorization_code',
                 'code': '4321432143214321',
                 'redirect_uri': 'http://testsite/account/sceneid/login/'
             })
-            if not matcher(request.body):
+            if not matcher(request):
                 raise Exception("Incorrect POST body: %r" % request.body)
 
             return (200, {'Content-Type': 'application/json'}, json.dumps({

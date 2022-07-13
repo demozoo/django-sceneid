@@ -36,7 +36,7 @@ setup(
     ],
     extras_require={
         "testing": [
-            'responses>=0.13,<1',
+            'responses>=0.14,<0.21',
         ]
     },
     license="BSD",
