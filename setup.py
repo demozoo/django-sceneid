@@ -24,18 +24,19 @@ setup(
         "Framework :: Django :: 3.0",
         "Framework :: Django :: 3.1",
         "Framework :: Django :: 3.2",
+        "Framework :: Django :: 4.0",
         "Topic :: Internet :: WWW/HTTP",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
     install_requires=[
-        'Django>=3.0,<4',
+        'Django>=3.0,<5',
         'requests>=2,<3',
     ],
     extras_require={
         "testing": [
-            'responses>=0.13,<1',
+            'responses>=0.14,<0.21',
         ]
     },
     license="BSD",
