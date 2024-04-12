@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.1.2 (2024-04-12)
+
+ * Confirm Django 5.x support and remove upper bound on Django dependency
+
+
 0.1.1 (2022-07-13)
 ------------------
 
